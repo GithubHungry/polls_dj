@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ question.question_text }}</title>
+</head>
+<body>
+<p>Номер вопроса : {{ question.id }}</p><br/>
+<p>Текст вопроса : {{ question.question_text }}</p><br/>
+<p>Дата публикации вопроса : {{ question.pub_date }}</p><br/>
+{% if error_message %}
+    <p><strong>{{ error_message }}</strong></p>
+{% endif %}
+<h1>Ответы : </h1>
+<form action="{% url 'polls:vote' question.id %}" method="post">
+
+    {% csrf_token %}
+    {% for choice in question.choice_set.all %}
+        <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+        <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+    {% endfor %}
+    <input type="submit" value="Vote">
+</form>
+
+</body>
+</html>
