@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.urls import reverse
 from django.utils import timezone
 
 
@@ -26,6 +27,9 @@ class Post(models.Model):
 	status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
 	objects = models.Manager()  # Default manager
 	published = PublishedManager()  # Custom manager
+
+	def get_absolute_url(self):
+		return reverse('blog:post_detail', args=[self.slug, self.publish.year, self.publish.month, self.publish.day, ])
 
 	class Meta:
 		verbose_name = 'Post'
