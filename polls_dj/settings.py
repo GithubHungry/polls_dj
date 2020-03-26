@@ -121,3 +121,11 @@ STATICFILES_DIRS = [STATIC_DIR]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'shopmanage7@gmail.com'
+EMAIL_HOST_PASSWORD = 'M2t8zUmPQg'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
