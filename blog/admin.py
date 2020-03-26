@@ -1,10 +1,17 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from .models import Post, PostShots
+from .models import Post, PostShots, Review
 
 
 # Register your models here.
+class ReviewInline(admin.TabularInline):
+	"""For add reviews to posts."""
+	model = Review
+	extra = 1  # Number of extra reviews.
+	readonly_fields = ('name', 'email',)
+
+
 class PostShotsInLine(admin.TabularInline):
 	model = PostShots
 	extra = 3
@@ -25,7 +32,7 @@ class PostAdmin(admin.ModelAdmin):
 	raw_id_fields = ('author',)
 	date_hierarchy = 'publish'
 	ordering = ('status', 'publish')
-	inlines = [PostShotsInLine]
+	inlines = [PostShotsInLine, ReviewInline]
 
 	def get_poster(self, obj):
 		"""Show mini photo of book."""
@@ -46,3 +53,10 @@ class PostShotsAdmin(admin.ModelAdmin):
 		return mark_safe(f'<img src={obj.image.url} width="50" height="70"')
 
 	get_image.short_description = 'Image'
+
+
+@admin.register(Review)
+class Review(admin.ModelAdmin):
+	list_display = ('id', 'name', 'email', 'post', 'created', 'active')
+	list_display_links = ('id', 'name', 'email')
+	search_fields = ('name', 'post', 'body', 'email')

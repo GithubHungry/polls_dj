@@ -53,3 +53,21 @@ class PostShots(models.Model):
 
 	def __str__(self):
 		return self.title
+
+
+class Review(models.Model):
+	"""Model for reviews."""
+	post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reviews')
+	name = models.CharField(max_length=225)
+	email = models.EmailField()
+	body = models.TextField()
+	created = models.DateTimeField(auto_now_add=True)
+	updated = models.DateTimeField(auto_now=True)
+	parent = models.ForeignKey('self', verbose_name='Parent', on_delete=models.SET_NULL, blank=True, null=True)
+	active = models.BooleanField(default=True)
+
+	class Meta:
+		ordering = ('created',)
+
+	def __str__(self):
+		return 'Review by {} on {}'.format(self.name, self.post.title)  # post.title

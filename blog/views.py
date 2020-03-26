@@ -3,8 +3,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView, DetailView
 
-from .forms import EmailPostForm
-from .models import Post
+from .forms import EmailPostForm, ReviewForm
+from .models import Post, Review
 
 
 # Create your views here.
@@ -29,23 +29,17 @@ class PostListView(ListView):
 # 	return render(request, 'blog/post/list.html', {'page': page, 'posts': posts})
 
 
-class PostDetailView(DetailView):
-	model = Post
-	template_name = 'blog/post/detail.html'
-
-	def get_context_data(self, **kwargs):
-		context = super().get_context_data(**kwargs)
-		return context
-
-
-# def post_detail(request, slug, year, month, day):
-# 	post = get_object_or_404(Post, slug=slug, status='published', publish__year=year, publish__month=month,
-# 	                         publish__day=day)
-# 	return render(request, 'blog/post/detail.html', {'post': post})
+# class PostDetailView(DetailView):
+# 	model = Post
+# 	template_name = 'blog/post/detail.html'
+#
+# 	def get_context_data(self, **kwargs):
+# 		context = super().get_context_data(**kwargs)
+# 		return context
 
 
-def post_share(request, post_id):
-	post = get_object_or_404(Post, status='published', id=post_id)
+def post_share(request, slug):
+	post = get_object_or_404(Post, status='published', slug=slug)
 	sent = False
 	if request.method == 'POST':
 		form = EmailPostForm(request.POST)
@@ -59,3 +53,39 @@ def post_share(request, post_id):
 	else:
 		form = EmailPostForm()
 	return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
+
+
+# def add_review(request, slug, year, month, day):
+# 	"""Add new review."""
+# 	post = get_object_or_404(Post, slug=slug, status='published', publish__year=year, publish__month=month,
+# 	                         publish__day=day)
+# 	reviews = post.reviews.filter(active=True)
+# 	new_review = None
+# 	if request.method == 'POST':
+# 		review_form = ReviewForm(data=request.POST)
+# 		if review_form.is_valid():
+# 			new_review = review_form.save(commit=False)
+# 			new_review.post = post
+# 			new_review.save()
+# 	else:
+# 		review_form = ReviewForm()
+# 	return render(request, 'blog/post/detail.html',
+# 	              {'post': post, 'reviews': reviews, 'review_form': review_form, 'new_review': new_review})
+
+
+def post_detail(request, slug, year, month, day):
+	"""Add new review."""
+	post = get_object_or_404(Post, slug=slug, status='published', publish__year=year, publish__month=month,
+	                         publish__day=day)
+	reviews = post.reviews.filter(active=True)
+	new_review = None
+	if request.method == 'POST':
+		review_form = ReviewForm(data=request.POST)
+		if review_form.is_valid():
+			new_review = review_form.save(commit=False)
+			new_review.post = post
+			new_review.save()
+	else:
+		review_form = ReviewForm()
+	return render(request, 'blog/post/detail.html',
+	              {'post': post, 'reviews': reviews, 'review_form': review_form, 'new_review': new_review})
