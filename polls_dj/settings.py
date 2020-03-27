@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 
 	'polls.apps.PollsConfig',
 	'blog.apps.BlogConfig',
+	'taggit',
 ]
 
 MIDDLEWARE = [

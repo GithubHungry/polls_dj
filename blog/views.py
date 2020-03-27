@@ -1,7 +1,9 @@
 from django.core.mail import send_mail
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Count
 from django.shortcuts import render, get_object_or_404
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView, DetailView
+from taggit.models import Tag
 
 from .forms import EmailPostForm, ReviewForm
 from .models import Post, Review
@@ -9,24 +11,28 @@ from .models import Post, Review
 
 # Create your views here.
 
-class PostListView(ListView):
-	queryset = Post.published.all()
-	context_object_name = 'posts'  # how it names in template
-	template_name = 'blog/post/list.html'
-	paginate_by = 3
+# class PostListView(ListView):
+# 	queryset = Post.published.all()
+# 	context_object_name = 'posts'  # how it names in template
+# 	template_name = 'blog/post/list.html'
+# 	paginate_by = 3
 
 
-# def post_list(request):
-# 	object_list = Post.published.all()
-# 	paginator = Paginator(object_list, 3)
-# 	page = request.GET.get('page')
-# 	try:
-# 		posts = paginator.page(page)
-# 	except PageNotAnInteger:
-# 		posts = paginator.page(1)
-# 	except EmptyPage:
-# 		posts = paginator.page(paginator.num_pages)
-# 	return render(request, 'blog/post/list.html', {'page': page, 'posts': posts})
+def post_list(request, tag_slug=None):
+	object_list = Post.published.all()
+	tag = None
+	if tag_slug:
+		tag = get_object_or_404(Tag, slug=tag_slug)
+		object_list = object_list.filter(tags__in=[tag])
+	paginator = Paginator(object_list, 3)
+	page = request.GET.get('page')
+	try:
+		posts = paginator.page(page)
+	except PageNotAnInteger:
+		posts = paginator.page(1)
+	except EmptyPage:
+		posts = paginator.page(paginator.num_pages)
+	return render(request, 'blog/post/list.html', {'page': page, 'posts': posts, 'tag': tag})
 
 
 # class PostDetailView(DetailView):
@@ -55,24 +61,6 @@ def post_share(request, slug):
 	return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
 
 
-# def add_review(request, slug, year, month, day):
-# 	"""Add new review."""
-# 	post = get_object_or_404(Post, slug=slug, status='published', publish__year=year, publish__month=month,
-# 	                         publish__day=day)
-# 	reviews = post.reviews.filter(active=True)
-# 	new_review = None
-# 	if request.method == 'POST':
-# 		review_form = ReviewForm(data=request.POST)
-# 		if review_form.is_valid():
-# 			new_review = review_form.save(commit=False)
-# 			new_review.post = post
-# 			new_review.save()
-# 	else:
-# 		review_form = ReviewForm()
-# 	return render(request, 'blog/post/detail.html',
-# 	              {'post': post, 'reviews': reviews, 'review_form': review_form, 'new_review': new_review})
-
-
 def post_detail(request, slug, year, month, day):
 	"""Add new review."""
 	post = get_object_or_404(Post, slug=slug, status='published', publish__year=year, publish__month=month,
@@ -83,9 +71,18 @@ def post_detail(request, slug, year, month, day):
 		review_form = ReviewForm(data=request.POST)
 		if review_form.is_valid():
 			new_review = review_form.save(commit=False)
+			if request.POST.get('parent', None):
+				review_form.parent_id = int(request.POST.get('parent'))
 			new_review.post = post
 			new_review.save()
 	else:
 		review_form = ReviewForm()
+
+	post_tags_ids = post.tags.values_list('id', flat=True)
+	similar_posts = Post.published.filter(tags__in=post_tags_ids)
+	similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+	similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
+
 	return render(request, 'blog/post/detail.html',
-	              {'post': post, 'reviews': reviews, 'review_form': review_form, 'new_review': new_review})
+	              {'post': post, 'reviews': reviews, 'review_form': review_form, 'new_review': new_review,
+	               'similar_posts': similar_posts})
